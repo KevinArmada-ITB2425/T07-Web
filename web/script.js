@@ -2,73 +2,61 @@ document.addEventListener("DOMContentLoaded", () => {
     const formulari = document.getElementById("formulari-calculadora");
     const resultatsList = document.getElementById("resultats-list");
     const ctxAigua = document.getElementById("grafica-consum-aigua").getContext("2d");
-    const ctxEnergia = document.getElementById("grafica-consum-energia").getContext("2d");
 
-    let graficaAigua, graficaEnergia;
+    let graficaAigua;
 
-    formulari.addEventListener("submit", (e) => {
+    formulari.addEventListener("submit", async (e) => {
         e.preventDefault();
 
         const diesTotals = parseInt(document.getElementById("dies").value, 10);
 
-        fetch('./json/consumo_total.csv')
-            .then(response => response.text())
-            .then(csvData => {
-                const consums = parseCSV(csvData);
+        try {
+            const response = await fetch('./data/consumo_total.csv'); // Asegura que la ruta es correcta
+            const csvData = await response.text();
+            const consums = parseCSV(csvData);
 
-                const consumTotalAigua = calcularConsumTotal(diesTotals, consums.aiguaSetmana, consums.aiguaCapSetmana);
-                const consumTotalElectricitat = calcularConsumTotal(diesTotals, consums.electricitatSetmana, consums.electricitatCapSetmana);
+            const consumDiariMitja = calcularConsumMitja(consums);
+            const consumTotal = consumDiariMitja * diesTotals;
 
-                const consumMensualAigua = calcularConsumoAproximado(consumTotalAigua, diesTotals, 30);
-                const consumAnualAigua = calcularConsumoAproximado(consumTotalAigua, diesTotals, 365);
-                const consumMensualElectricitat = calcularConsumoAproximado(consumTotalElectricitat, diesTotals, 30);
-                const consumAnualElectricitat = calcularConsumoAproximado(consumTotalElectricitat, diesTotals, 365);
+            const consumMensual = calcularConsumoAproximado(consumTotal, diesTotals, 30);
+            const consumAnual = calcularConsumoAproximado(consumTotal, diesTotals, 365);
 
-                resultatsList.innerHTML = "";
+            resultatsList.innerHTML = "";
 
-                const crearElementoLista = (texto) => {
-                    const listItem = document.createElement("li");
-                    listItem.textContent = texto;
-                    return listItem;
-                };
+            const crearElementoLista = (texto) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = texto;
+                return listItem;
+            };
 
-                resultatsList.appendChild(crearElementoLista(`Consum d'aigua en ${diesTotals} dies: ${consumTotalAigua.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`));
-                resultatsList.appendChild(crearElementoLista(`Consum d'energia en ${diesTotals} dies: ${consumTotalElectricitat.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
-                resultatsList.appendChild(crearElementoLista(`Consum mensual aproximat Aigua: ${consumMensualAigua.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres | Energia: ${consumMensualElectricitat.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
-                resultatsList.appendChild(crearElementoLista(`Consum anual aproximat Aigua: ${consumAnualAigua.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres | Energia: ${consumAnualElectricitat.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
+            resultatsList.appendChild(crearElementoLista(`Consum total en ${diesTotals} dies: ${consumTotal.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres/kWh`));
+            resultatsList.appendChild(crearElementoLista(`Consum mensual aproximat: ${consumMensual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres/kWh`));
+            resultatsList.appendChild(crearElementoLista(`Consum anual aproximat: ${consumAnual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres/kWh`));
 
-                if (graficaAigua) graficaAigua.destroy();
-                graficaAigua = crearGrafica(ctxAigua, diesTotals, consumTotalAigua, 'rgba(37, 99, 235, 0.5)', 'rgba(37, 99, 235, 1)', 'Consum d\'aigua (litres)');
+            if (graficaAigua) graficaAigua.destroy();
+            graficaAigua = crearGrafica(ctxAigua, diesTotals, consumTotal, 'rgba(37, 99, 235, 0.5)', 'rgba(37, 99, 235, 1)', 'Consum total');
 
-                if (graficaEnergia) graficaEnergia.destroy();
-                graficaEnergia = crearGrafica(ctxEnergia, diesTotals, consumTotalElectricitat, 'rgba(255, 99, 132, 0.5)', 'rgba(255, 99, 132, 1)', 'Consum d\'electricitat (kWh)');
-            })
-            .catch(error => {
-                console.error('Error al llegir el fitxer CSV:', error);
-                resultatsList.innerHTML = 'Error al llegir el fitxer CSV.';
-            });
+        } catch (error) {
+            console.error('Error al llegir el fitxer CSV:', error);
+            resultatsList.innerHTML = 'Error al llegir el fitxer CSV.';
+        }
     });
 });
 
 function parseCSV(csvData) {
-    const lines = csvData.split('\n');
-    const headers = lines[0].split(',');
-
-    const consums = {
-        aiguaSetmana: parseFloat(lines[1].split(',')[0]),
-        aiguaCapSetmana: parseFloat(lines[1].split(',')[1]),
-        electricitatSetmana: parseFloat(lines[1].split(',')[2]),
-        electricitatCapSetmana: parseFloat(lines[1].split(',')[3])
-    };
-
-    return consums;
+    const lines = csvData.trim().split('\n').slice(1); // Elimina la primera línea (encabezados)
+    return lines.map(line => {
+        const [fecha, consumo] = line.split(',');
+        return {
+            fecha: fecha.replace(/"/g, '').trim(), // Limpia las comillas
+            consumo: parseFloat(consumo) // Convierte a número
+        };
+    });
 }
 
-function calcularConsumTotal(diesTotals, consumDiaSetmana, consumDiaCapSetmana) {
-    const diesCapSetmana = Math.floor(diesTotals / 7) * 2 + Math.min(diesTotals % 7, 2);
-    const diesSetmana = diesTotals - diesCapSetmana;
-
-    return (diesSetmana * consumDiaSetmana) + (diesCapSetmana * consumDiaCapSetmana);
+function calcularConsumMitja(consums) {
+    const totalConsum = consums.reduce((sum, entry) => sum + entry.consumo, 0);
+    return totalConsum / consums.length; // Calcula el consumo promedio diario
 }
 
 function calcularConsumoAproximado(consumTotal, dies, diasEnPeriodo) {
