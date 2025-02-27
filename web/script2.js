@@ -1,6 +1,14 @@
-document.getElementById('calcular').addEventListener('click', calcular);
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('calcular').addEventListener('click', calcular);
+});
 
 function calcular() {
+    const dias = parseInt(document.getElementById('dias').value, 10);
+    if (isNaN(dias) || dias <= 0) {
+        document.getElementById('resultado').innerText = 'Por favor, introduce un número válido de días.';
+        return;
+    }
+
     document.getElementById('resultado').innerText = 'Calculando...';
     
     fetch('./json/consumo_total.csv')
@@ -18,8 +26,9 @@ function calcular() {
             });
 
             if (consumos.length >= 2) {
-                const resultado = consumos[1] * 22 + consumos[0] * 8;
-                document.getElementById('resultado').innerText = `El resultado del cálculo es: ${resultado}`;
+                const consumoDiario = (consumos[0] + consumos[1]) / 2;
+                const resultado = consumoDiario * dias;
+                document.getElementById('resultado').innerText = `El consumo total de agua para ${dias} días es: ${resultado} unidades.`;
             } else {
                 document.getElementById('resultado').innerText = 'No se encontraron suficientes datos en el CSV.';
             }
