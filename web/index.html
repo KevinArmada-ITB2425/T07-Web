@@ -1,18 +1,42 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Consumo de Agua</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Calculadora de Consum Energètic</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Calculadora de Consumo de Agua</h1>
-        <input type="number" id="dias" placeholder="Número de días">
-        <button id="calcular">Calcular</button>
-        <div id="resultado">Esperando resultado...</div>
-    </div>
-    <script src="script.js"></script>
+    <header>
+        <h1>Calculadora de Consum Energètic</h1>
+    </header>
+    <main>
+        <section id="calculadora">
+            <h2>Introdueix les dades de consum</h2>
+            <form id="formulari-calculadora">
+                <label for="dies">Nombre total de dies:</label>
+                <input type="number" id="dies" name="dies" min="1" value="7" required>
+
+                <label for="csvFile">Carrega el fitxer CSV:</label>
+                <input type="file" id="csvFile" name="csvFile" accept=".csv" required>
+
+                <button type="submit">Calcular</button>
+            </form>
+
+            <h3>Resultats</h3>
+            <ul id="resultats-list"></ul>
+        </section>
+
+        <section id="grafica">
+            <h2>Gràfic de Consum d'Aigua</h2>
+            <canvas id="grafica-consum-aigua"></canvas>
+
+            <h2>Gràfic de Consum d'Energia</h2>
+            <canvas id="grafica-consum-energia"></canvas>
+        </section>
+    </main>
+    <script src="js/scripts.js"></script>
+    <script src="js/grafica.js"></script>
 </body>
 </html>
