@@ -10,12 +10,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
 
         const diesTotals = parseInt(document.getElementById("dies").value, 10);
-        const csvFile = document.getElementById("csvFile").files[0];
 
-        if (csvFile) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const csvData = event.target.result;
+        fetch('./json/consumo_total.csv')
+            .then(response => response.text())
+            .then(csvData => {
                 const consums = parseCSV(csvData);
 
                 const consumTotalAigua = calcularConsumTotal(diesTotals, consums.aiguaSetmana, consums.aiguaCapSetmana);
@@ -44,9 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (graficaEnergia) graficaEnergia.destroy();
                 graficaEnergia = crearGrafica(ctxEnergia, diesTotals, consumTotalElectricitat, 'rgba(255, 99, 132, 0.5)', 'rgba(255, 99, 132, 1)', 'Consum d\'electricitat (kWh)');
-            };
-            reader.readAsText(csvFile);
-        }
+            })
+            .catch(error => {
+                console.error('Error al llegir el fitxer CSV:', error);
+                resultatsList.innerHTML = 'Error al llegir el fitxer CSV.';
+            });
     });
 });
 
@@ -73,4 +73,27 @@ function calcularConsumTotal(diesTotals, consumDiaSetmana, consumDiaCapSetmana) 
 
 function calcularConsumoAproximado(consumTotal, dies, diasEnPeriodo) {
     return (consumTotal / dies) * diasEnPeriodo;
+}
+
+function crearGrafica(ctx, diesTotals, consumTotal, backgroundColor, borderColor, label) {
+    return new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Array.from({ length: diesTotals }, (_, i) => i + 1),
+            datasets: [{
+                label: label,
+                data: Array(diesTotals).fill(consumTotal / diesTotals),
+                backgroundColor: backgroundColor,
+                borderColor: borderColor,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 }
