@@ -5,7 +5,7 @@ function calcular() {
         .then(response => response.text())
         .then(data => {
             const lines = data.split('\n').slice(1); // Skip the header line
-            const consumos = lines.map(line => {
+            const consumos = lines.filter(line => line.trim() !== '').map(line => {
                 const [fecha, consumo_total] = line.split(',');
                 return parseInt(consumo_total);
             });
