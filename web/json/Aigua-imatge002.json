@@ -1,0 +1,30 @@
+{
+    "fecha": "28-02-2024",
+    "consumo_total": 7440,
+    "consumo_por_hora": [
+        {"hora": "12:00 AM", "consumo": 205},
+        {"hora": "1:00 AM", "consumo": 154},
+        {"hora": "1:59 AM", "consumo": 160},
+        {"hora": "2:59 AM", "consumo": 154},
+        {"hora": "3:59 AM", "consumo": 154},
+        {"hora": "4:59 AM", "consumo": 158},
+        {"hora": "5:59 AM", "consumo": 163},
+        {"hora": "6:59 AM", "consumo": 160},
+        {"hora": "7:59 AM", "consumo": 280},
+        {"hora": "9:00 AM", "consumo": 282},
+        {"hora": "10:00 AM", "consumo": 440},
+        {"hora": "11:00 AM", "consumo": 430},
+        {"hora": "12:00 PM", "consumo": 380},
+        {"hora": "1:00 PM", "consumo": 450},
+        {"hora": "2:00 PM", "consumo": 480},
+        {"hora": "3:00 PM", "consumo": 430},
+        {"hora": "4:00 PM", "consumo": 400},
+        {"hora": "5:00 PM", "consumo": 390},
+        {"hora": "6:00 PM", "consumo": 560},
+        {"hora": "7:00 PM", "consumo": 430},
+        {"hora": "8:00 PM", "consumo": 410},
+        {"hora": "9:00 PM", "consumo": 370},
+        {"hora": "10:00 PM", "consumo": 180},
+        {"hora": "11:00 PM", "consumo": 250}
+    ]
+  }
