@@ -56,6 +56,22 @@ document.addEventListener("DOMContentLoaded", () => {
             const consumMensualKwh = (electricidadSetmana + electricidadCapSetmana) / 7 * 30; // Estimación mensual
             const consumAnualKwh = (electricidadSetmana + electricidadCapSetmana) / 7 * 365; // Estimación anual
 
+            // Cargar el archivo CSV de productos
+            const responseProductos = await fetch('./data/productos.csv'); // Asegúrate de que la ruta es correcta
+            if (!responseProductos.ok) throw new Error("No se pudo cargar el archivo CSV de productos");
+
+            const csvProductosData = await responseProductos.text();
+            console.log("Datos del CSV de productos recibidos:", csvProductosData);
+
+            // Parsear los datos del CSV de productos
+            const productosData = parseCSVProductos(csvProductosData);
+            if (productosData.length === 0) throw new Error("No se encontraron datos en el CSV de productos");
+
+            // Calcular el gasto total de productos
+            const totalGasto = calcularGastoTotal(productosData, diesTotals);
+            const gastoMensual = (totalGasto / diesTotals) * 30; // Corregido: uso del gasto total por los días totales
+            const gastoAnual = (totalGasto / diesTotals) * 365; // Corregido: uso del gasto total por los días totales
+
             // Limpiamos la lista de resultados y añadimos los nuevos cálculos
             resultatsList.innerHTML = "";
 
@@ -66,14 +82,50 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             // Mostrar los resultados de consumo de agua
-            resultatsList.appendChild(crearElementoLista(`Consum total en ${diesTotals} dies: ${consumTotal.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`));
-            resultatsList.appendChild(crearElementoLista(`Consum mensual aproximat: ${consumMensual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`));
-            resultatsList.appendChild(crearElementoLista(`Consum anual aproximat: ${consumAnual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`));
-
-            // Mostrar los resultados de electricidad en kWh
-            resultatsList.appendChild(crearElementoLista(`Consum total en ${diesTotals} dies: ${consumTotalKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
-            resultatsList.appendChild(crearElementoLista(`Consum mensual aproximat: ${consumMensualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
-            resultatsList.appendChild(crearElementoLista(`Consum anual aproximat: ${consumAnualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
+            const crearSeccion = (titulo, items) => {
+                const seccion = document.createElement("div");
+                seccion.style.marginBottom = "20px";
+            
+                const tituloElemento = document.createElement("h3");
+                tituloElemento.textContent = titulo;
+                tituloElemento.style.color = "#2563eb";
+                tituloElemento.style.marginBottom = "5px";
+            
+                const lista = document.createElement("ul");
+                lista.style.listStyleType = "disc";
+                lista.style.paddingLeft = "20px";
+            
+                items.forEach(texto => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = texto;
+                    lista.appendChild(listItem);
+                });
+            
+                seccion.appendChild(tituloElemento);
+                seccion.appendChild(lista);
+                return seccion;
+            };
+            
+            // Limpiar la lista de resultados y agregar las secciones
+            resultatsList.innerHTML = "";
+            
+            resultatsList.appendChild(crearSeccion("Consum d'Aigua", [
+                `Consum total en ${diesTotals} dies: ${consumTotal.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`,
+                `Consum mensual aproximat: ${consumMensual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`,
+                `Consum anual aproximat: ${consumAnual.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} litres`
+            ]));
+            
+            resultatsList.appendChild(crearSeccion("Consum d'Electricitat", [
+                `Consum total en ${diesTotals} dies: ${consumTotalKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`,
+                `Consum mensual aproximat: ${consumMensualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`,
+                `Consum anual aproximat: ${consumAnualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`
+            ]));
+            
+            resultatsList.appendChild(crearSeccion("Gasto en Productes", [
+                `Gasto total en ${diesTotals} dies: ${totalGasto.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' })}`,
+                `Gasto mensual aproximat: ${gastoMensual.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' })}`,
+                `Gasto anual aproximat: ${gastoAnual.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' })}`
+            ]));
 
             // Actualizar la gráfica de agua
             if (graficaAigua) graficaAigua.destroy();
@@ -120,6 +172,35 @@ function parseCSVElectricidad(csvData) {
 
     console.log("Datos parseados del CSV de electricidad:", datosElectricidad);
     return datosElectricidad;
+}
+
+// Función para parsear el CSV de productos
+function parseCSVProductos(csvData) {
+    const lines = csvData.trim().split('\n').slice(1); // Ignora la primera línea (encabezado)
+    const datosProductos = lines.map(line => {
+        const columns = line.split(',').map(col => col.replace(/"/g, '').trim()); // Elimina comillas y espacios
+        
+        // Comprobamos si hay suficientes columnas y si la última columna tiene un precio numérico
+        if (columns.length < 5 || isNaN(columns[columns.length - 1])) return null; // Validamos que haya 5 columnas mínimas y que el precio sea numérico
+        
+        const producto = columns[0]; // El nombre del producto está en la primera columna
+        const precio = parseFloat(columns[columns.length - 1]); // El precio está en la última columna
+        
+        // Devolvemos un objeto con el nombre del producto y su precio
+        return {
+            producto: producto,
+            precio: precio
+        };
+    }).filter(entry => entry !== null); // Filtra entradas nulas
+
+    console.log("Datos parseados del CSV de productos:", datosProductos);
+    return datosProductos;
+}
+
+// Función para calcular el gasto total de productos
+function calcularGastoTotal(productosData, diasTotales) {
+    const gastoMensual = productosData.reduce((sum, entry) => sum + entry.precio, 0);
+    return (gastoMensual / 30) * diasTotales; // Convertimos el gasto mensual en diario y lo multiplicamos por los días indicados
 }
 
 // Función para calcular el consumo promedio diario de agua
