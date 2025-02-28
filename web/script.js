@@ -2,8 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const formulari = document.getElementById("formulari-calculadora");
     const resultatsList = document.getElementById("resultats-list");
     const ctxAigua = document.getElementById("grafica-consum-aigua").getContext("2d");
+    const ctxEnergia = document.getElementById("grafica-consum-energia").getContext("2d"); // Obtener el contexto para la gráfica de energía
 
     let graficaAigua;
+    let graficaEnergia; // Declarar la variable de la gráfica de energía
 
     formulari.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -73,10 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
             resultatsList.appendChild(crearElementoLista(`Consum mensual aproximat: ${consumMensualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
             resultatsList.appendChild(crearElementoLista(`Consum anual aproximat: ${consumAnualKwh.toLocaleString('ca-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh`));
 
-            // Actualizar la gráfica
+            // Actualizar la gráfica de agua
             if (graficaAigua) graficaAigua.destroy();
             graficaAigua = crearGrafica(ctxAigua, diesTotals, consumTotal, 'rgba(37, 99, 235, 0.5)', 'rgba(37, 99, 235, 1)', 'Consum total');
             
+            // Actualizar la gráfica de energía
+            if (graficaEnergia) graficaEnergia.destroy();
+            graficaEnergia = crearGrafica(ctxEnergia, diesTotals, consumTotalKwh, 'rgba(255, 99, 132, 0.5)', 'rgba(255, 99, 132, 1)', 'Consum d\'electricitat (kWh)');
 
         } catch (error) {
             console.error('Error:', error.message);
