@@ -33,6 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
             // Calculamos el consumo mensual y anual
             const consumMensual = calcularConsumoAproximado(consumTotal, diesTotals, 30);
             const consumAnual = calcularConsumoAproximado(consumTotal, diesTotals, 365);
+            const consumMensualElectricitat = calcularConsumoAproximado(consumTotalElectricitat, diesTotals, 30);
+            const consumAnualElectricitat = calcularConsumoAproximado(consumTotalElectricitat, diesTotals, 365);
 
             // Limpiamos la lista de resultados y añadimos los nuevos cálculos
             resultatsList.innerHTML = "";
